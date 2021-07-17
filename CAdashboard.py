@@ -87,12 +87,15 @@ st.sidebar.title('Course Analytics Dashboard')
 
 uploaded_file = st.sidebar.file_uploader("Upload student reflection")
 
+
+compile = False
+
 if uploaded_file is not None:
     df = getDF(uploaded_file)
+    selected_col = st.sidebar.selectbox("Choose data column to cluster:", list(df.columns.values))
+    compile = st.sidebar.button("Compile")
 
-selected_col = st.sidebar.selectbox("Choose data column to cluster:", list(df.columns.values))
-
-if st.sidebar.button("Compile"):
+if compile and uploaded_file is not None:
     st.write("Outputting clusters for: \"" + selected_col + "\"." )
     with st.spinner('Compiling...'):
         st.dataframe(k_means_compile(df, selected_col),width=500, height=500)

@@ -8,7 +8,7 @@ model = SentenceTransformer('paraphrase-distilroberta-base-v1')
 
 import pandas as pd
 import numpy as np
-
+import plotly.express as px
 import matplotlib.pyplot as plt
 from sklearn.cluster import KMeans
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
@@ -91,11 +91,11 @@ def sentimentAnalysis(df, col):
             sentAve = (sent1["compound"])
             sentiment.append(sentAve)
 
-        return sentiment
+    return pd.DataFrame(sentiment, columns=["sentiment"])
 
 
 #_____________________________________________________Web App Code___________________________________________________________________________________________
-st.sidebar.title('Reflection Analysis')
+st.sidebar.title('Reflection Analysis Dashboard')
 
 uploaded_file = st.sidebar.file_uploader("Upload student reflection")
 
@@ -117,8 +117,7 @@ if uploaded_file is not None:
             st.write("Outputting clusters for: \"" + selected_col + "\"." )
             with st.spinner('Compiling...'):
                 df_output = k_means_compile(df, selected_col)
-                with st.beta_expander("Cluster output"):
-                    st.table(df_output)
+                st.table(df_output)
                 st.success('Done!')
 
     if selected == "Sentiment Analysis":
@@ -128,10 +127,11 @@ if uploaded_file is not None:
         compile = st.button("Compile")
 
         if compile and uploaded_file is not None:
-            sentiment = sentimentAnalysis(df, selected_col)
-            fig1 = plt.figure()
-            ax1 = fig1.add_subplot(111)
-            fig1.suptitle('Student Sentiment')
-            boxplot1 = ax1.boxplot(sentiment)
-            st.write(fig1)
+            st.write("Outputting sentiment analysis for: \"" + selected_col + "\"." )
+            with st.spinner('Compiling...'):
+                df_sentiment = sentimentAnalysis(df, selected_col)
+                fig = px.box(df_sentiment, y="sentiment")
+                st.plotly_chart(fig)
+                st.dataframe(df_sentiment.describe())
+                st.success('Done!')
     

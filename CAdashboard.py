@@ -11,7 +11,7 @@ import numpy as np
 
 import matplotlib.pyplot as plt
 from sklearn.cluster import KMeans
-
+from nltk.sentiment.vader import SentimentIntensityAnalyzer
 
 #_____________________________________________________Functions___________________________________________________________________________________________
 def getDF(file):
@@ -80,24 +80,58 @@ def kmean_cluster(num_clusters, corpus, embeddings):
     df_output = pd.DataFrame().from_dict(df2)
     return df_output
     
+def sentimentAnalysis(df, col):
+    sid = SentimentIntensityAnalyzer()
+    sentiment = []
+    for response1 in df[col]:
+        if response1 is np.nan:
+            continue
+        else:
+            sent1 = sid.polarity_scores(str(response1))
+            sentAve = (sent1["compound"])
+            sentiment.append(sentAve)
+
+        return sentiment
 
 
 #_____________________________________________________Web App Code___________________________________________________________________________________________
-st.sidebar.title('Course Analytics Dashboard')
+st.sidebar.title('Reflection Analysis')
 
 uploaded_file = st.sidebar.file_uploader("Upload student reflection")
 
 
-compile = False
 
 if uploaded_file is not None:
     df = getDF(uploaded_file)
-    selected_col = st.sidebar.selectbox("Choose data column to cluster:", list(df.columns.values))
-    compile = st.sidebar.button("Compile")
+    selected = st.sidebar.selectbox("What analysis would you like to perform?", ("K-Means Clustering", "Sentiment Analysis"))
 
-if compile and uploaded_file is not None:
-    st.write("Outputting clusters for: \"" + selected_col + "\"." )
-    with st.spinner('Compiling...'):
-        st.dataframe(k_means_compile(df, selected_col),width=500, height=500)
-        st.success('Done!')
+
+    if selected == "K-Means Clustering":
+        compile = False
+        
+        selected_col = st.selectbox("Choose column to cluster:", list(df.columns.values))
+        compile = st.button("Compile")
+
+
+        if compile and uploaded_file is not None:
+            st.write("Outputting clusters for: \"" + selected_col + "\"." )
+            with st.spinner('Compiling...'):
+                df_output = k_means_compile(df, selected_col)
+                with st.beta_expander("Cluster output"):
+                    st.table(df_output)
+                st.success('Done!')
+
+    if selected == "Sentiment Analysis":
+        compile = False
+        selected_col = st.selectbox("Choose column to analyze sentiment:", list(df.columns.values))
+        
+        compile = st.button("Compile")
+
+        if compile and uploaded_file is not None:
+            sentiment = sentimentAnalysis(df, selected_col)
+            fig1 = plt.figure()
+            ax1 = fig1.add_subplot(111)
+            fig1.suptitle('Student Sentiment')
+            boxplot1 = ax1.boxplot(sentiment)
+            st.write(fig1)
     
